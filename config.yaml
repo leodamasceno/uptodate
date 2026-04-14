@@ -1,0 +1,12 @@
+sites:  
+- name: "Tech Crunch"
+  url: "https://techcrunch.com/"
+  type: "html"
+  selector: "h3.loop-card__title"
+  max_items: 3
+
+- name: "AWS News Feed"
+  url: "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+  type: "xml"
+  selector: "title"
+  max_items: 5
