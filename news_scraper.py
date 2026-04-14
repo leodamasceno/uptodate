@@ -12,15 +12,6 @@ try:
 except ImportError:
     cloudscraper = None
 
-try:
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    SELENIUM_AVAILABLE = True
-except ImportError:
-    SELENIUM_AVAILABLE = False
-
 DEFAULT_CONFIG = "config.yaml"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " \
              "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
@@ -37,31 +28,6 @@ def load_config(path: Path) -> dict:
         raise ValueError("Configuration file must contain a top-level 'sites' list")
 
     return config
-
-
-def fetch_html_with_selenium(url: str, timeout: int = 15) -> str:
-    """Fetch HTML using Selenium headless browser for JavaScript-rendered pages."""
-    if not SELENIUM_AVAILABLE:
-        raise ImportError("Selenium not installed. Install with: pip install selenium")
-    
-    try:
-        options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument(f"user-agent={USER_AGENT}")
-        
-        driver = webdriver.Chrome(options=options)
-        driver.set_page_load_timeout(timeout)
-        driver.get(url)
-        WebDriverWait(driver, timeout).until(
-            EC.presence_of_all_elements_located((By.TAG_NAME, "body"))
-        )
-        html = driver.page_source
-        driver.quit()
-        return html
-    except Exception as e:
-        raise RuntimeError(f"Selenium fetch failed: {e}")
 
 
 def fetch_html(url: str, timeout: int = 15) -> str:
@@ -83,15 +49,6 @@ def fetch_html(url: str, timeout: int = 15) -> str:
         response = scraper.get(url, headers=headers, timeout=timeout, allow_redirects=True)
 
     response.raise_for_status()
-    
-    # If the page likely needs JS rendering (very short content), try Selenium
-    if len(response.text) < 5000 and SELENIUM_AVAILABLE:
-        try:
-            return fetch_html_with_selenium(url, timeout)
-        except Exception:
-            # Fallback to static HTML if Selenium fails
-            pass
-    
     return response.text
 
 
